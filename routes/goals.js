@@ -119,8 +119,7 @@ router.get('/:id', (req, res) => {
   const goalId = parseInt(req.params.id);
   const goal = goals.find(g => g.id === goalId);
   if (!goal) {
-    res.status(404).send('Goal not found');
-    
+    return res.status(404).json({ message: 'Goal not found' });
   }
   res.json(goal);
 });
@@ -153,7 +152,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const { name, description, dueDate } = req.body;
   if (!name || !description || !dueDate) {
-    return res.status(400).send('Missing required fields: name, description, dueDate');
+    return res.status(400).json({ message: 'Missing required fields: name, description, dueDate' });
   }
   const newGoal = {
     id: nextGoalId++,
@@ -191,9 +190,9 @@ router.delete('/:id', (req, res) => {
   const goalId = parseInt(req.params.id);
   const goalIndex = goals.findIndex(g => g.id === goalId);
   if (goalIndex === -1) {
-    res.status(404).send('Goal not found');
+    return res.status(404).json({ message: 'Goal not found' });
   }
-  goals = goals.filter(g => g.id !== goalId);
+  goals.splice(goalIndex, 1); // Usando splice para ser consistente con tasks.js
   res.status(204).send(); // No content
 });
 

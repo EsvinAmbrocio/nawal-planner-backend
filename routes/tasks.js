@@ -119,7 +119,7 @@ router.get('/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
   const task = tasks.find(t => t.id === taskId);
   if (!task) {
-    res.status(404).send('Task not found');
+    return res.status(404).json({ message: 'Task not found' });
   }
   res.json(task);
 });
@@ -152,7 +152,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const { name, description, dueDate } = req.body;
   if (!name || !description || !dueDate) {
-    return res.status(400).send('Missing required fields: name, description, dueDate');
+    return res.status(400).json({ message: 'Missing required fields: name, description, dueDate' });
   }
   const newTask = {
     id: nextTaskId++,
@@ -190,7 +190,7 @@ router.delete('/:id', (req, res) => {
   const taskId = parseInt(req.params.id);
   const taskIndex = tasks.findIndex(t => t.id === taskId);
   if (taskIndex === -1) {
-    res.status(404).send('Task not found');
+    return res.status(404).json({ message: 'Task not found' });
   }
   tasks.splice(taskIndex, 1);
   res.status(204).send(); // No content
