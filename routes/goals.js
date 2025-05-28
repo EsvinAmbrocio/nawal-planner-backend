@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
-// Almacenamiento en memoria (array global para metas)
-let goals = [];
-let nextGoalId = 1;
+const Goal = require('../models/Goal');
 
 /**
  * @swagger
@@ -85,8 +82,13 @@ let nextGoalId = 1;
  *               items:
  *                 $ref: '#/components/schemas/Goal'
  */
-router.get('/', (req, res) => {
-  res.json(goals);
+router.get('/', async (req, res) => {
+  try {
+    const goals = await Goal.find();
+    res.json(goals);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching goals', error: err.message });
+  }
 });
 
 // GET una meta por ID
@@ -115,13 +117,16 @@ router.get('/', (req, res) => {
  *       404:
  *         description: Meta no encontrada
  */
-router.get('/:id', (req, res) => {
-  const goalId = parseInt(req.params.id);
-  const goal = goals.find(g => g.id === goalId);
-  if (!goal) {
-    return res.status(404).json({ message: 'Goal not found' });
+router.get('/:id', async (req, res) => {
+  try {
+    const goal = await Goal.findById(req.params.id);
+    if (!goal) {
+      return res.status(404).json({ message: 'Goal not found' });
+    }
+    res.json(goal);
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid ID', error: err.message });
   }
-  res.json(goal);
 });
 
 // POST crear una nueva meta
@@ -149,19 +154,18 @@ router.get('/:id', (req, res) => {
  *       400:
  *         description: Faltan campos requeridos
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { name, description, dueDate } = req.body;
   if (!name || !description || !dueDate) {
     return res.status(400).json({ message: 'Missing required fields: name, description, dueDate' });
   }
-  const newGoal = {
-    id: nextGoalId++,
-    name,
-    description,
-    dueDate
-  };
-  goals.push(newGoal);
-  res.status(201).json(newGoal);
+  try {
+    const newGoal = new Goal({ name, description, dueDate });
+    await newGoal.save();
+    res.status(201).json(newGoal);
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating goal', error: err.message });
+  }
 });
 
 // DELETE una meta por ID
@@ -186,14 +190,16 @@ router.post('/', (req, res) => {
  *       404:
  *         description: Meta no encontrada
  */
-router.delete('/:id', (req, res) => {
-  const goalId = parseInt(req.params.id);
-  const goalIndex = goals.findIndex(g => g.id === goalId);
-  if (goalIndex === -1) {
-    return res.status(404).json({ message: 'Goal not found' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await Goal.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Goal not found' });
+    }
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid ID', error: err.message });
   }
-  goals.splice(goalIndex, 1); // Usando splice para ser consistente con tasks.js
-  res.status(204).send(); // No content
 });
 
 module.exports = router;
