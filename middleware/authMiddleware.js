@@ -1,6 +1,6 @@
-require('dotenv').config(); // Cargar variables de entorno desde .env
+require('dotenv').config();
 
-const API_KEY = process.env.API_KEY; // Cargar desde la variable de entorno
+const API_KEY = process.env.API_KEY;
 
 function authMiddleware(req, res, next) {
   const userApiKey = req.headers.authorization;
@@ -9,12 +9,15 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ message: 'Error: API Key requerida en el header Authorization.' });
   }
 
-  if (!API_KEY) { // Verificar si la API_KEY se cargó correctamente desde .env
-    console.error('Error: La variable de entorno API_KEY no está configurada en el servidor.');
+  if (!API_KEY) {
     return res.status(500).json({ message: 'Error de configuración del servidor.'});
   }
+  const token = String(userApiKey ?? '').split(" ")[1];
+  if(!token){
+    return res.status(401).json({ message: 'Error: API Key requerida en el header Authorization.' });
+  }
 
-  if (userApiKey !== API_KEY) {
+  if (token !== API_KEY) {
     return res.status(403).json({ message: 'Error: API Key inválida.' });
   }
 
